@@ -153,7 +153,6 @@ export default class SourceControl implements Disposable {
   private readonly changes = new ChangesProvider(this)
   private readonly history = new HistoryProvider(this)
   private readonly disposables: Disposable[] = [this.changes, this.history]
-  private refreshTimer: NodeJS.Timeout | undefined
 
   private constructor(
     private readonly ui: CocUiApi,
@@ -181,7 +180,6 @@ export default class SourceControl implements Disposable {
       historyView,
       this.ui.createTreeView('git.changes', { treeDataProvider: this.changes }),
       this.ui.createTreeView('git.history', { treeDataProvider: this.history }),
-      workspace.onDidChangeTextDocument(() => this.scheduleRefresh()),
       workspace.onDidSaveTextDocument(() => this.refresh())
     )
     context.subscriptions.push(this)
@@ -195,14 +193,6 @@ export default class SourceControl implements Disposable {
   public refresh(): void {
     this.changes.refresh()
     this.history.refresh()
-  }
-
-  private scheduleRefresh(): void {
-    if (this.refreshTimer) clearTimeout(this.refreshTimer)
-    this.refreshTimer = setTimeout(() => {
-      this.refreshTimer = undefined
-      this.refresh()
-    }, 150)
   }
 
   public async openChange(file: ChangedFile): Promise<void> {
@@ -225,7 +215,6 @@ export default class SourceControl implements Disposable {
   }
 
   public dispose(): void {
-    if (this.refreshTimer) clearTimeout(this.refreshTimer)
     for (const disposable of this.disposables.splice(0)) disposable.dispose()
   }
 }
