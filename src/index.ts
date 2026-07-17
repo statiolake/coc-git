@@ -167,13 +167,6 @@ export async function activate(context: ExtensionContext): Promise<ExtensionApi 
     await manager.showBlameDoc()
   }))
 
-  subscriptions.push(languages.registerInlayHintsProvider(
-    [{ scheme: 'file' }],
-    {
-      provideInlayHints: (document, range, token) => manager.provideBlameHints(document, range, token)
-    }
-  ))
-
   subscriptions.push(listManager.registerList(new GStatus(nvim, manager)))
   subscriptions.push(listManager.registerList(new Branches(nvim, manager)))
   subscriptions.push(listManager.registerList(new Commits(nvim, manager)))

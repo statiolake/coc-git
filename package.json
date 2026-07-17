@@ -181,12 +181,6 @@
           "scope": "window",
           "description": "use real time in git blame info"
         },
-        "git.blameInlay.enable": {
-          "type": "boolean",
-          "default": true,
-          "scope": "window",
-          "description": "Show the last commit for visible lines as inlay hints."
-        },
         "git.branchCharacter": {
           "type": "string",
           "default": "",

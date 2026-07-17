@@ -401,7 +401,7 @@ export default class GitBuffer implements Disposable {
     this.blameInfo = result
   }
 
-  public async getBlameInfo(range?: [number, number]): Promise<BlameInfo[]> {
+  private async getBlameInfo(range?: [number, number]): Promise<BlameInfo[]> {
     let { relpath } = this
     let root = this.repo.root
     let res: BlameInfo[] = []
