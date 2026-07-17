@@ -256,6 +256,14 @@ export default class DocumentManager {
     if (buf) await buf.showBlameDoc(line)
   }
 
+  public async toggleBlame(): Promise<void> {
+    const hidden = await this.nvim.getVar('coc_git_hide_blame_virtual_text')
+    await this.nvim.setVar('coc_git_hide_blame_virtual_text', hidden ? 0 : 1)
+    const buf = await this.buffer
+    const line = await this.nvim.call('line', '.') as number
+    if (buf) await buf.showBlameInfo(line)
+  }
+
   public async browser(action = 'open', range?: [number, number], permalink = false): Promise<void> {
     let buf = await this.buffer
     if (buf) await buf.browser(action, range, permalink)

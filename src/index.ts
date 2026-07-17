@@ -167,6 +167,10 @@ export async function activate(context: ExtensionContext): Promise<ExtensionApi 
     await manager.showBlameDoc()
   }))
 
+  subscriptions.push(commands.registerCommand('git.toggleBlame', async () => {
+    await manager.toggleBlame()
+  }))
+
   subscriptions.push(listManager.registerList(new GStatus(nvim, manager)))
   subscriptions.push(listManager.registerList(new Branches(nvim, manager)))
   subscriptions.push(listManager.registerList(new Commits(nvim, manager)))

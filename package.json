@@ -93,6 +93,10 @@
       {
         "title": "Show git blame info in float or popup window",
         "command": "git.showBlameDoc"
+      },
+      {
+        "title": "Toggle current-line inline blame",
+        "command": "git.toggleBlame"
       }
     ],
     "configuration": {
