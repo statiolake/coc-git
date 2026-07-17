@@ -278,6 +278,10 @@ export default class DocumentManager {
     await this.diffEditor.openCurrent(layout, revision)
   }
 
+  public async toggleDiff(revision?: string): Promise<void> {
+    await this.diffEditor.toggleCurrent(revision)
+  }
+
   public async openFileDiff(root: string, relative: string, layout?: DiffLayout, revision?: string): Promise<void> {
     await this.diffEditor.openFile(root, relative, layout, revision)
   }

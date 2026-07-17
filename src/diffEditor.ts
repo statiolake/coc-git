@@ -1,6 +1,6 @@
 import { extensions, Uri, workspace } from 'coc.nvim'
 import path from 'path'
-import type { CocDiffviewApi, DiffLayout } from '@statiolake/coc-diffview'
+import type { CocDiffviewApi, DiffLayout, OpenDiffOptions } from '@statiolake/coc-diffview'
 import Git from './model/git'
 
 export type { DiffLayout } from '@statiolake/coc-diffview'
@@ -9,6 +9,16 @@ export default class GitDiffEditor {
   constructor(private readonly git: Git) {}
 
   public async openCurrent(layout?: DiffLayout, revision = 'HEAD'): Promise<void> {
+    const { root, relative, bufnr } = await this.currentFile()
+    await this.getDiffview().open(await this.fileOptions(root, relative, bufnr, layout, revision))
+  }
+
+  public async toggleCurrent(revision = 'HEAD'): Promise<void> {
+    const { root, relative, bufnr } = await this.currentFile()
+    await this.getDiffview().toggle(await this.fileOptions(root, relative, bufnr, undefined, revision))
+  }
+
+  private async currentFile(): Promise<{ root: string; relative: string; bufnr: number }> {
     const bufnr = await workspace.nvim.call('bufnr', ['%']) as number
     const document = workspace.getDocument(bufnr)
     if (!document || Uri.parse(document.uri).scheme !== 'file') {
@@ -17,7 +27,7 @@ export default class GitDiffEditor {
     const filename = Uri.parse(document.uri).fsPath
     const root = await this.git.getRepositoryRoot(path.dirname(filename))
     const relative = toGitPath(path.relative(root, filename))
-    await this.open(root, relative, bufnr, layout, revision)
+    return { root, relative, bufnr }
   }
 
   public async openFile(
@@ -29,7 +39,8 @@ export default class GitDiffEditor {
     const filename = path.join(root, relative)
     const bufnr = await workspace.nvim.call('bufadd', [filename]) as number
     await workspace.nvim.call('bufload', [bufnr])
-    await this.open(root, toGitPath(relative), bufnr, layout, revision)
+    const gitPath = toGitPath(relative)
+    await this.getDiffview().open(await this.fileOptions(root, gitPath, bufnr, layout, revision))
   }
 
   public async openRevisionFile(
@@ -61,14 +72,13 @@ export default class GitDiffEditor {
     })
   }
 
-  private async open(
+  private async fileOptions(
     root: string,
     relative: string,
     bufnr: number,
     layout: DiffLayout | undefined,
     revision: string
-  ): Promise<void> {
-    const diffview = this.getDiffview()
+  ): Promise<OpenDiffOptions> {
     let original = ''
     try {
       original = (await this.git.exec(root, ['show', `${revision}:${relative}`], { log: false })).stdout
@@ -76,7 +86,7 @@ export default class GitDiffEditor {
       // A missing blob represents a newly added worktree file.
     }
     const filetype = await workspace.nvim.call('getbufvar', [bufnr, '&filetype']) as string
-    await diffview.open({
+    return {
       original: {
         kind: 'text',
         text: original,
@@ -90,7 +100,7 @@ export default class GitDiffEditor {
       },
       title: `${relative} (${revision} ↔ Worktree)`,
       layout
-    })
+    }
   }
 
   private getDiffview(): CocDiffviewApi {

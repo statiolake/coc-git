@@ -80,6 +80,10 @@
         "command": "git.openDiffSplit"
       },
       {
+        "title": "Toggle the current file diff.",
+        "command": "git.toggleDiff"
+      },
+      {
         "title": "Show Source Control.",
         "command": "git.showSourceControl"
       },

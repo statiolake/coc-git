@@ -7,6 +7,7 @@ import {
   TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
+  TreeView,
   Uri,
   workspace
 } from 'coc.nvim'
@@ -136,6 +137,11 @@ class HistoryProvider extends RefreshableProvider<HistoryItem> {
       const item = new TreeItem(`${element.hash.slice(0, 8)} ${element.subject}`, TreeItemCollapsibleState.Collapsed)
       item.description = element.decoration
       item.tooltip = `${element.hash}\n${element.subject}`
+      item.command = {
+        command: 'git.expandSourceControlHistoryItem',
+        title: 'Show Commit Files',
+        arguments: [element]
+      }
       return item
     }
     const item = new TreeItem(element.relative, TreeItemCollapsibleState.None)
@@ -153,6 +159,7 @@ export default class SourceControl implements Disposable {
   private readonly changes = new ChangesProvider(this)
   private readonly history = new HistoryProvider(this)
   private readonly disposables: Disposable[] = [this.changes, this.history]
+  private historyTree: TreeView<HistoryItem> | undefined
 
   private constructor(
     private readonly ui: CocUiApi,
@@ -174,12 +181,32 @@ export default class SourceControl implements Disposable {
     })
     const changesView = this.ui.registerView({ id: 'git.changes', containerId: 'git', name: 'Changes', order: 1 })
     const historyView = this.ui.registerView({ id: 'git.history', containerId: 'git', name: 'History', order: 2 })
+    const changesTree = this.ui.createTreeView('git.changes', { treeDataProvider: this.changes })
+    this.historyTree = this.ui.createTreeView('git.history', {
+      treeDataProvider: this.history,
+      actions: [
+        {
+          id: 'git.expandCommit',
+          title: 'Show Commit Files',
+          keys: ['<CR>'],
+          when: (item: HistoryItem) => item.kind === 'commit',
+          handler: (item: HistoryItem) => this.expandHistoryItem(item as Commit)
+        },
+        {
+          id: 'git.openCommitFile',
+          title: 'Open File Diff',
+          keys: ['<CR>'],
+          when: (item: HistoryItem) => item.kind === 'commitFile',
+          handler: (item: HistoryItem) => this.openCommitFile(item as CommitFile)
+        }
+      ]
+    })
     this.disposables.push(
       container,
       changesView,
       historyView,
-      this.ui.createTreeView('git.changes', { treeDataProvider: this.changes }),
-      this.ui.createTreeView('git.history', { treeDataProvider: this.history }),
+      changesTree,
+      this.historyTree,
       workspace.onDidSaveTextDocument(() => this.refresh())
     )
     context.subscriptions.push(this)
@@ -205,6 +232,10 @@ export default class SourceControl implements Disposable {
     )
   }
 
+  public async expandHistoryItem(commit: Commit): Promise<void> {
+    await this.historyTree?.reveal(commit, { focus: true, select: true, expand: true })
+  }
+
   public async currentRoot(): Promise<string | undefined> {
     const bufnr = await workspace.nvim.call('bufnr', ['%']) as number
     return await this.manager.resolveGitRootFromBufferOrCwd(bufnr) || undefined
@@ -215,8 +246,9 @@ export default class SourceControl implements Disposable {
   }
 
   public dispose(): void {
+    this.historyTree = undefined
     for (const disposable of this.disposables.splice(0)) disposable.dispose()
   }
 }
 
-export type { ChangedFile, CommitFile }
+export type { ChangedFile, Commit, CommitFile }

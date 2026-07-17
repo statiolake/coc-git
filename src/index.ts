@@ -13,7 +13,7 @@ import Resolver from './model/resolver'
 import GitService from './model/service'
 import addSource from './source'
 import { findGit, IGit } from './util'
-import SourceControl, { ChangedFile, CommitFile } from './sourceControl'
+import SourceControl, { ChangedFile, Commit, CommitFile } from './sourceControl'
 
 export interface ExtensionApi {
   git: Git
@@ -160,6 +160,14 @@ export async function activate(context: ExtensionContext): Promise<ExtensionApi 
 
   subscriptions.push(commands.registerCommand('git.openDiffSplit', async (revision?: string) => {
     await manager.openDiff('split', revision)
+  }))
+
+  subscriptions.push(commands.registerCommand('git.toggleDiff', async (revision?: string) => {
+    await manager.toggleDiff(revision)
+  }))
+
+  subscriptions.push(commands.registerCommand('git.expandSourceControlHistoryItem', async (commit: Commit) => {
+    await sourceControl.expandHistoryItem(commit)
   }))
 
   subscriptions.push(commands.registerCommand('git.toggleGutters', async () => {
