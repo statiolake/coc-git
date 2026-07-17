@@ -55,7 +55,7 @@ export default class Commits extends BasicList {
   private cachedCommits: Map<string, string[]> = new Map()
 
   constructor(nvim: Neovim, private manager: Manager) {
-    super(nvim)
+    super()
     this.addAction('preview', async (item, context) => {
       let { commit, root } = item.data
       let lines: string[] = []

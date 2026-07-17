@@ -256,7 +256,7 @@ export default class GitBuffer implements Disposable {
     } else {
       let info = infos.find(o => lnum >= o.startLnum && lnum <= o.endLnum)
       if (info && info.author && info.author != 'Not Committed Yet') {
-        blameText = `(${info.author} ${info.time}) ${info.summary}`
+        blameText = formatBlameInfo(info)
       } else {
         blameText = 'Not committed yet'
       }
@@ -401,7 +401,7 @@ export default class GitBuffer implements Disposable {
     this.blameInfo = result
   }
 
-  private async getBlameInfo(range?: [number, number]): Promise<BlameInfo[]> {
+  public async getBlameInfo(range?: [number, number]): Promise<BlameInfo[]> {
     let { relpath } = this
     let root = this.repo.root
     let res: BlameInfo[] = []
@@ -899,4 +899,11 @@ export default class GitBuffer implements Disposable {
     this.conflicts = undefined
     this.currentSigns = undefined
   }
+}
+
+export function formatBlameInfo(info: BlameInfo): string {
+  if (!info.author || info.author === 'Not Committed Yet') {
+    return 'Uncommitted changes - You, now'
+  }
+  return `${info.summary || 'Unknown commit'} - ${info.author}, ${info.time || 'now'}`
 }

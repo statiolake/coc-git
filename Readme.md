@@ -2,6 +2,13 @@
 
 Git integration of [coc.nvim](https://github.com/neoclide/coc.nvim).
 
+This is the `statiolake/coc-git` fork. It keeps Git repository and revision
+resolution in this extension while delegating diff rendering to
+[`@statiolake/coc-diffview`](https://github.com/statiolake/coc-diffview), in
+the same way VS Code's Git extension delegates document comparison to the diff
+editor. `coc-diffview` receives only an original and a modified document and
+has no Git-specific behavior.
+
 **Note:** many useful features not implemented, it's recommended to
 use plugin like [vim-fugitive](https://github.com/tpope/vim-fugitive) at the
 same time.
@@ -27,9 +34,15 @@ In your vim/neovim, run command:
 - Git status of current project, by `g:coc_git_status`.
 - Git status of current buffer, by`b:coc_git_status`.
 - Git status of current line, by`b:coc_git_blame` for statusline, and `addGBlameToVirtualText` for inline blames.
+- Last-commit inlay hints in the form `subject - You, 2 hours ago`, backed by
+  the same unsaved-buffer blame data as the existing blame features.
 - Git related lists, including `issues`, `gfiles`, `gstatus`, `commits`, `branches` & `bcommits`
 - Keymaps for git chunks, including `<Plug>(coc-git-chunkinfo)` `<Plug>(coc-git-nextchunk)` & `<Plug>(coc-git-prevchunk)` ,
 - Commands for chunks, including `git.chunkInfo` `git.chunkStage` `git.chunkUndo` and more.
+- Editable diff commands: `git.openDiff`, `git.openDiffUnified`, and
+  `git.openDiffSplit`. An optional revision argument defaults to `HEAD`.
+- A `diff` action in the `gstatus` list opens the selected worktree file using
+  `coc-diffview`.
 - Keymaps for git conflicts, including `<Plug>(coc-git-nextconflict)`, `<Plug>(coc-git-prevconflict)`, `<Plug>(coc-git-keepcurrent)`, `<Plug>(coc-git-keepincoming)` & `<Plug>(coc-git-keepboth)`.
 - Completion support for semantic commit.
 - Completion support for GitHub/GitLab issues.

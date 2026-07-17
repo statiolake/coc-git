@@ -1,10 +1,11 @@
-import { ConfigurationChangeEvent, Disposable, disposeAll, Document, events, Neovim, window, workspace } from 'coc.nvim'
+import { CancellationToken, ConfigurationChangeEvent, Disposable, disposeAll, Document, events, InlayHint, LinesTextDocument, Neovim, Range, window, workspace } from 'coc.nvim'
 import debounce from 'debounce'
-import GitBuffer from './model/buffer'
+import GitBuffer, { formatBlameInfo } from './model/buffer'
 import Git from './model/git'
 import Service from './model/service'
 import GitStatus from './model/status'
 import { ConflictPart, Diff, DiffCategory, GitConfiguration } from './types'
+import GitDiffEditor, { DiffLayout } from './diffEditor'
 
 export default class DocumentManager {
   private buffers: Map<number, GitBuffer> = new Map()
@@ -16,7 +17,8 @@ export default class DocumentManager {
     private nvim: Neovim,
     private service: Service,
     private virtualTextSrcId: number,
-    private conflictSrcId: number = 0
+    private conflictSrcId: number = 0,
+    private diffEditor: GitDiffEditor = new GitDiffEditor(service.git)
   ) {
     this.loadConfiguration()
     workspace.onDidChangeConfiguration(this.loadConfiguration, this, this.disposables)
@@ -262,6 +264,40 @@ export default class DocumentManager {
   public async diffCached(): Promise<void> {
     let buf = await this.buffer
     if (buf) await buf.diffCached()
+  }
+
+  public async openDiff(layout?: DiffLayout, revision?: string): Promise<void> {
+    await this.diffEditor.openCurrent(layout, revision)
+  }
+
+  public async openFileDiff(root: string, relative: string, layout?: DiffLayout, revision?: string): Promise<void> {
+    await this.diffEditor.openFile(root, relative, layout, revision)
+  }
+
+  public async provideBlameHints(document: LinesTextDocument, range: Range, token: CancellationToken): Promise<InlayHint[]> {
+    if (!workspace.getConfiguration('git').get<boolean>('blameInlay.enable', true)) return []
+    const cocDocument = workspace.getDocument(document.uri)
+    const buffer = cocDocument ? this.buffers.get(cocDocument.bufnr) : undefined
+    if (!buffer || token.isCancellationRequested) return []
+    const start = range.start.line + 1
+    const end = Math.min(document.lineCount, range.end.line + 1)
+    const entries = await buffer.getBlameInfo([start, end])
+    if (token.isCancellationRequested) return []
+    const hints: InlayHint[] = []
+    for (const entry of entries) {
+      for (let line = Math.max(start, entry.startLnum); line <= Math.min(end, entry.endLnum); line++) {
+        hints.push({
+          position: {
+            line: line - 1,
+            character: document.lineAt(line - 1).text.length
+          },
+          label: formatBlameInfo(entry),
+          paddingLeft: true,
+          tooltip: `${entry.sha.substring(0, 10)} ${entry.author || 'Not committed'}`
+        })
+      }
+    }
+    return hints
   }
 
   public refresh(): void {

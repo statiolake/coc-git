@@ -22,8 +22,12 @@ export default class GStatus extends BasicList {
   public readonly defaultAction = 'open'
 
   constructor(nvim: Neovim, private manager: Manager) {
-    super(nvim)
+    super()
     this.addLocationActions()
+    this.addAction('diff', async item => {
+      let { root, relative } = item.data
+      await this.manager.openFileDiff(root, relative)
+    })
     this.addMultipleAction('add', async items => {
       let { root } = items[0].data
       let fileArgs = items.map(o => o.data.relative)

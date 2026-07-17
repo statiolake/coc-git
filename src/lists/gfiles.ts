@@ -11,7 +11,7 @@ export default class Gfiles extends BasicList {
   public actions: ListAction[] = []
 
   constructor(nvim: Neovim, private manager: Manager) {
-    super(nvim)
+    super()
     const preferences = workspace.getConfiguration('coc.preferences')
     let jumpCommand = preferences.get<string>('jumpCommand', 'edit')
 

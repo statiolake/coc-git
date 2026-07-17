@@ -143,6 +143,18 @@ export async function activate(context: ExtensionContext): Promise<ExtensionApi 
     await manager.diffCached()
   }))
 
+  subscriptions.push(commands.registerCommand('git.openDiff', async (revision?: string) => {
+    await manager.openDiff(undefined, revision)
+  }))
+
+  subscriptions.push(commands.registerCommand('git.openDiffUnified', async (revision?: string) => {
+    await manager.openDiff('unified', revision)
+  }))
+
+  subscriptions.push(commands.registerCommand('git.openDiffSplit', async (revision?: string) => {
+    await manager.openDiff('split', revision)
+  }))
+
   subscriptions.push(commands.registerCommand('git.toggleGutters', async () => {
     await manager.toggleGutters()
   }))
@@ -154,6 +166,13 @@ export async function activate(context: ExtensionContext): Promise<ExtensionApi 
   subscriptions.push(commands.registerCommand('git.showBlameDoc', async () => {
     await manager.showBlameDoc()
   }))
+
+  subscriptions.push(languages.registerInlayHintsProvider(
+    [{ scheme: 'file' }],
+    {
+      provideInlayHints: (document, range, token) => manager.provideBlameHints(document, range, token)
+    }
+  ))
 
   subscriptions.push(listManager.registerList(new GStatus(nvim, manager)))
   subscriptions.push(listManager.registerList(new Branches(nvim, manager)))

@@ -1,9 +1,9 @@
 {
-  "name": "coc-git",
+  "name": "@statiolake/coc-git",
   "version": "2.7.2",
   "description": "Git extension for coc.nvim",
   "main": "lib/index.js",
-  "publisher": "chemzqm",
+  "publisher": "statiolake",
   "keywords": [
     "coc.nvim",
     "git"
@@ -13,13 +13,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/neoclide/coc-git.git"
+    "url": "git+https://github.com/statiolake/coc-git.git"
   },
   "scripts": {
     "prepare": "node esbuild.js"
   },
   "activationEvents": [
     "*"
+  ],
+  "extensionDependencies": [
+    "@statiolake/coc-diffview"
   ],
   "contributes": {
     "commands": [
@@ -62,6 +65,18 @@
       {
         "title": "Show cached diff in preview window.",
         "command": "git.diffCached"
+      },
+      {
+        "title": "Open the current file diff.",
+        "command": "git.openDiff"
+      },
+      {
+        "title": "Open the current file in a unified diff.",
+        "command": "git.openDiffUnified"
+      },
+      {
+        "title": "Open the current file in a side-by-side diff.",
+        "command": "git.openDiffSplit"
       },
       {
         "title": "Fold unchanged lines of current buffer.",
@@ -165,6 +180,12 @@
           "default": false,
           "scope": "window",
           "description": "use real time in git blame info"
+        },
+        "git.blameInlay.enable": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Show the last commit for visible lines as inlay hints."
         },
         "git.branchCharacter": {
           "type": "string",
@@ -467,6 +488,7 @@
   "author": "chemzqm@gmail.com",
   "license": "MIT",
   "devDependencies": {
+    "@statiolake/coc-diffview": "git+https://github.com/statiolake/coc-diffview.git",
     "@chemzqm/tsconfig": "^0.0.3",
     "@types/colors": "^1.2.1",
     "@types/debounce": "^1.2.0",
@@ -480,7 +502,7 @@
     "iconv-lite": "^0.6.2",
     "semver": "^7.7.1",
     "timeago.js": "^4.0.2",
-    "typescript": "^4.5.4",
+    "typescript": "^5.3.3",
     "uuid": "^7.0.1",
     "which": "^2.0.2"
   },
