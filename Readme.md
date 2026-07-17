@@ -41,6 +41,9 @@ In your vim/neovim, run command:
 - Commands for chunks, including `git.chunkInfo` `git.chunkStage` `git.chunkUndo` and more.
 - Editable diff commands: `git.openDiff`, `git.openDiffUnified`, and
   `git.openDiffSplit`. An optional revision argument defaults to `HEAD`.
+- A coc-ui Source Control container (`git.showSourceControl`) shows current
+  changes and recent commits. Change files and files nested below a commit open
+  through coc-diffview.
 - A `diff` action in the `gstatus` list opens the selected worktree file using
   `coc-diffview`.
 - Keymaps for git conflicts, including `<Plug>(coc-git-nextconflict)`, `<Plug>(coc-git-prevconflict)`, `<Plug>(coc-git-keepcurrent)`, `<Plug>(coc-git-keepincoming)` & `<Plug>(coc-git-keepboth)`.

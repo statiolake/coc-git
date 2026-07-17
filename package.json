@@ -22,7 +22,8 @@
     "*"
   ],
   "extensionDependencies": [
-    "@statiolake/coc-diffview"
+    "@statiolake/coc-diffview",
+    "@statiolake/coc-ui"
   ],
   "contributes": {
     "commands": [
@@ -77,6 +78,10 @@
       {
         "title": "Open the current file in a side-by-side diff.",
         "command": "git.openDiffSplit"
+      },
+      {
+        "title": "Show Source Control.",
+        "command": "git.showSourceControl"
       },
       {
         "title": "Fold unchanged lines of current buffer.",
@@ -487,6 +492,7 @@
   "license": "MIT",
   "devDependencies": {
     "@statiolake/coc-diffview": "git+https://github.com/statiolake/coc-diffview.git",
+    "@statiolake/coc-ui": "git+https://github.com/statiolake/coc-ui.git",
     "@chemzqm/tsconfig": "^0.0.3",
     "@types/colors": "^1.2.1",
     "@types/debounce": "^1.2.0",

@@ -13,6 +13,7 @@ import Resolver from './model/resolver'
 import GitService from './model/service'
 import addSource from './source'
 import { findGit, IGit } from './util'
+import SourceControl, { ChangedFile, CommitFile } from './sourceControl'
 
 export interface ExtensionApi {
   git: Git
@@ -36,12 +37,18 @@ export async function activate(context: ExtensionContext): Promise<ExtensionApi 
   const { nvim } = workspace
   const service = new GitService(gitInfo)
   const manager = new Manager(nvim, service, virtualTextSrcId, conflictSrcId)
+  const sourceControl = SourceControl.create(context, manager, service.git)
   subscriptions.push(manager)
   addSource(context, service.resolver)
 
   subscriptions.push(commands.registerCommand('git.refresh', () => {
     manager.refresh()
+    sourceControl.refresh()
   }))
+
+  subscriptions.push(commands.registerCommand('git.showSourceControl', () => sourceControl.show()))
+  subscriptions.push(commands.registerCommand('git.openSourceControlChange', (file: ChangedFile) => sourceControl.openChange(file)))
+  subscriptions.push(commands.registerCommand('git.openSourceControlCommitFile', (file: CommitFile) => sourceControl.openCommitFile(file)))
 
   subscriptions.push(workspace.registerKeymap(['n'], 'git-nextchunk', async () => {
     await manager.nextChunk()

@@ -32,6 +32,35 @@ export default class GitDiffEditor {
     await this.open(root, toGitPath(relative), bufnr, layout, revision)
   }
 
+  public async openRevisionFile(
+    root: string,
+    relative: string,
+    originalRevision: string,
+    modifiedRevision: string,
+    layout?: DiffLayout
+  ): Promise<void> {
+    const gitPath = toGitPath(relative)
+    const [original, modified] = await Promise.all([
+      this.readRevision(root, originalRevision, gitPath),
+      this.readRevision(root, modifiedRevision, gitPath)
+    ])
+    const diffview = this.getDiffview()
+    await diffview.open({
+      original: {
+        kind: 'text',
+        text: original,
+        label: `${originalRevision}:${gitPath}`
+      },
+      modified: {
+        kind: 'text',
+        text: modified,
+        label: `${modifiedRevision}:${gitPath}`
+      },
+      title: `${gitPath} (${originalRevision} ↔ ${modifiedRevision})`,
+      layout
+    })
+  }
+
   private async open(
     root: string,
     relative: string,
@@ -39,10 +68,7 @@ export default class GitDiffEditor {
     layout: DiffLayout | undefined,
     revision: string
   ): Promise<void> {
-    const diffview = extensions.getExtensionById<CocDiffviewApi>('@statiolake/coc-diffview')
-    if (!diffview?.exports) {
-      throw new Error('coc-diffview is not active')
-    }
+    const diffview = this.getDiffview()
     let original = ''
     try {
       original = (await this.git.exec(root, ['show', `${revision}:${relative}`], { log: false })).stdout
@@ -50,7 +76,7 @@ export default class GitDiffEditor {
       // A missing blob represents a newly added worktree file.
     }
     const filetype = await workspace.nvim.call('getbufvar', [bufnr, '&filetype']) as string
-    await diffview.exports.open({
+    await diffview.open({
       original: {
         kind: 'text',
         text: original,
@@ -65,6 +91,20 @@ export default class GitDiffEditor {
       title: `${relative} (${revision} ↔ Worktree)`,
       layout
     })
+  }
+
+  private getDiffview(): CocDiffviewApi {
+    const extension = extensions.getExtensionById<CocDiffviewApi>('@statiolake/coc-diffview')
+    if (!extension?.exports) throw new Error('coc-diffview is not active')
+    return extension.exports
+  }
+
+  private async readRevision(root: string, revision: string, relative: string): Promise<string> {
+    try {
+      return (await this.git.exec(root, ['show', `${revision}:${relative}`], { log: false })).stdout
+    } catch {
+      return ''
+    }
   }
 }
 

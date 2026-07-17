@@ -282,6 +282,10 @@ export default class DocumentManager {
     await this.diffEditor.openFile(root, relative, layout, revision)
   }
 
+  public async openRevisionFileDiff(root: string, relative: string, originalRevision: string, modifiedRevision: string): Promise<void> {
+    await this.diffEditor.openRevisionFile(root, relative, originalRevision, modifiedRevision)
+  }
+
   public refresh(): void {
     for (let buf of this.buffers.values()) {
       buf.refresh()
