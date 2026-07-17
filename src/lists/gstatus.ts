@@ -19,7 +19,7 @@ const STATUS_MAP = {
 export default class GStatus extends BasicList {
   public readonly name = 'gstatus'
   public readonly description = 'Git status of current project'
-  public readonly defaultAction = 'open'
+  public readonly defaultAction = 'diff'
 
   constructor(nvim: Neovim, private manager: Manager) {
     super()
