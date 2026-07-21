@@ -13,7 +13,7 @@ import Resolver from './model/resolver'
 import GitService from './model/service'
 import addSource from './source'
 import { findGit, IGit } from './util'
-import SourceControl, { ChangedFile, Commit, CommitFile } from './sourceControl'
+import SourceControl, { ChangedFile, CommitFile, HistoryItem } from './sourceControl'
 
 export interface ExtensionApi {
   git: Git
@@ -49,6 +49,7 @@ export async function activate(context: ExtensionContext): Promise<ExtensionApi 
   subscriptions.push(commands.registerCommand('git.showSourceControl', () => sourceControl.show()))
   subscriptions.push(commands.registerCommand('git.openSourceControlChange', (file: ChangedFile) => sourceControl.openChange(file)))
   subscriptions.push(commands.registerCommand('git.openSourceControlCommitFile', (file: CommitFile) => sourceControl.openCommitFile(file)))
+  subscriptions.push(commands.registerCommand('git.activateSourceControlHistoryItem', (item: HistoryItem) => sourceControl.activateHistoryItem(item)))
 
   subscriptions.push(workspace.registerKeymap(['n'], 'git-nextchunk', async () => {
     await manager.nextChunk()
@@ -164,10 +165,6 @@ export async function activate(context: ExtensionContext): Promise<ExtensionApi 
 
   subscriptions.push(commands.registerCommand('git.toggleDiff', async (revision?: string) => {
     await manager.toggleDiff(revision)
-  }))
-
-  subscriptions.push(commands.registerCommand('git.expandSourceControlHistoryItem', async (commit: Commit) => {
-    await sourceControl.expandHistoryItem(commit)
   }))
 
   subscriptions.push(commands.registerCommand('git.toggleGutters', async () => {

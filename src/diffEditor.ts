@@ -43,6 +43,32 @@ export default class GitDiffEditor {
     await this.getDiffview().open(await this.fileOptions(root, gitPath, bufnr, layout, revision))
   }
 
+  public async openWorkingTreeFile(root: string, relative: string, layout?: DiffLayout): Promise<void> {
+    const filename = path.join(root, relative)
+    const bufnr = await workspace.nvim.call('bufadd', [filename]) as number
+    await workspace.nvim.call('bufload', [bufnr])
+    const gitPath = toGitPath(relative)
+    const original = await this.readIndex(root, gitPath)
+    const filetype = await workspace.nvim.call('getbufvar', [bufnr, '&filetype']) as string
+    await this.getDiffview().open({
+      original: { kind: 'text', text: original, label: `Index:${gitPath}`, filetype },
+      modified: { kind: 'buffer', buffer: bufnr, label: gitPath },
+      title: `${gitPath} (Index ↔ Worktree)`, layout
+    })
+  }
+
+  public async openStagedFile(root: string, relative: string, layout?: DiffLayout): Promise<void> {
+    const gitPath = toGitPath(relative)
+    const [original, modified] = await Promise.all([
+      this.readRevision(root, 'HEAD', gitPath), this.readIndex(root, gitPath)
+    ])
+    await this.getDiffview().open({
+      original: { kind: 'text', text: original, label: `HEAD:${gitPath}` },
+      modified: { kind: 'text', text: modified, label: `Index:${gitPath}` },
+      title: `${gitPath} (HEAD ↔ Index)`, layout
+    })
+  }
+
   public async openRevisionFile(
     root: string,
     relative: string,
@@ -112,6 +138,14 @@ export default class GitDiffEditor {
   private async readRevision(root: string, revision: string, relative: string): Promise<string> {
     try {
       return (await this.git.exec(root, ['show', `${revision}:${relative}`], { log: false })).stdout
+    } catch {
+      return ''
+    }
+  }
+
+  private async readIndex(root: string, relative: string): Promise<string> {
+    try {
+      return (await this.git.exec(root, ['show', `:${relative}`], { log: false })).stdout
     } catch {
       return ''
     }

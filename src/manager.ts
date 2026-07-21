@@ -286,6 +286,14 @@ export default class DocumentManager {
     await this.diffEditor.openFile(root, relative, layout, revision)
   }
 
+  public async openWorkingTreeFileDiff(root: string, relative: string, layout?: DiffLayout): Promise<void> {
+    await this.diffEditor.openWorkingTreeFile(root, relative, layout)
+  }
+
+  public async openStagedFileDiff(root: string, relative: string, layout?: DiffLayout): Promise<void> {
+    await this.diffEditor.openStagedFile(root, relative, layout)
+  }
+
   public async openRevisionFileDiff(root: string, relative: string, originalRevision: string, modifiedRevision: string): Promise<void> {
     await this.diffEditor.openRevisionFile(root, relative, originalRevision, modifiedRevision)
   }
