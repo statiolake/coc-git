@@ -3,6 +3,7 @@ import {
   Emitter,
   Event,
   ExtensionContext,
+  events,
   extensions,
   TreeDataProvider,
   TreeItem,
@@ -160,6 +161,10 @@ export default class SourceControl implements Disposable {
   private readonly history = new HistoryProvider(this)
   private readonly disposables: Disposable[] = [this.changes, this.history]
   private historyTree: TreeView<HistoryItem> | undefined
+  private readonly visibleTrees = new Set<string>()
+  private monitorTimer: NodeJS.Timeout | undefined
+  private monitorRunning = false
+  private repositorySnapshot: string | undefined
 
   private constructor(
     private readonly ui: CocUiApi,
@@ -207,7 +212,11 @@ export default class SourceControl implements Disposable {
       historyView,
       changesTree,
       this.historyTree,
-      workspace.onDidSaveTextDocument(() => this.refresh())
+      changesTree.onDidChangeVisibility(event => this.setTreeVisibility('changes', event.visible)),
+      this.historyTree.onDidChangeVisibility(event => this.setTreeVisibility('history', event.visible)),
+      workspace.onDidSaveTextDocument(() => void this.checkRepository(true)),
+      events.on('FocusGained', () => void this.checkRepository()),
+      events.on('BufEnter', () => void this.checkRepository())
     )
     context.subscriptions.push(this)
   }
@@ -220,6 +229,46 @@ export default class SourceControl implements Disposable {
   public refresh(): void {
     this.changes.refresh()
     this.history.refresh()
+  }
+
+  private setTreeVisibility(id: string, visible: boolean): void {
+    if (visible) this.visibleTrees.add(id)
+    else this.visibleTrees.delete(id)
+    if (this.visibleTrees.size) this.startMonitor()
+    else this.stopMonitor()
+  }
+
+  private startMonitor(): void {
+    if (this.monitorTimer) return
+    void this.checkRepository(true)
+    this.monitorTimer = setInterval(() => void this.checkRepository(), 1000)
+  }
+
+  private stopMonitor(): void {
+    if (this.monitorTimer) clearInterval(this.monitorTimer)
+    this.monitorTimer = undefined
+    this.repositorySnapshot = undefined
+  }
+
+  private async checkRepository(forceRefresh = false): Promise<void> {
+    if (!this.visibleTrees.size || this.monitorRunning) return
+    this.monitorRunning = true
+    try {
+      const root = await this.currentRoot()
+      if (!root) return
+      const [head, branch, status] = await Promise.all([
+        this.exec(root, ['rev-parse', 'HEAD']).catch(() => ''),
+        this.exec(root, ['rev-parse', '--abbrev-ref', 'HEAD']).catch(() => ''),
+        this.exec(root, ['status', '--porcelain=v1', '-uall']).catch(() => '')
+      ])
+      const snapshot = `${root}\0${head}\0${branch}\0${status}`
+      if (forceRefresh || (this.repositorySnapshot && snapshot !== this.repositorySnapshot)) {
+        this.refresh()
+      }
+      this.repositorySnapshot = snapshot
+    } finally {
+      this.monitorRunning = false
+    }
   }
 
   public async openChange(file: ChangedFile): Promise<void> {
@@ -246,6 +295,7 @@ export default class SourceControl implements Disposable {
   }
 
   public dispose(): void {
+    this.stopMonitor()
     this.historyTree = undefined
     for (const disposable of this.disposables.splice(0)) disposable.dispose()
   }
